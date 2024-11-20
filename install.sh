@@ -28,7 +28,7 @@ check_port() {
 for cmd in curl jq systemctl netstat; do
     if ! command_exists "$cmd"; then
         echo "Start install $cmd"
-        apt install -y $cmd
+        apt update -y && apt install -y $cmd
     fi
 done
 

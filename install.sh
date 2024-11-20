@@ -3,7 +3,7 @@
  # @Author: Vincent Yang
  # @Date: 2024-11-19 23:02:30
  # @LastEditors: Vincent Yang
- # @LastEditTime: 2024-11-19 23:13:36
+ # @LastEditTime: 2024-11-19 23:16:46
  # @FilePath: /derp-cmd/install.sh
  # @Telegram: https://t.me/missuo
  # @GitHub: https://github.com/missuo
@@ -27,8 +27,8 @@ check_port() {
 # Check required commands
 for cmd in curl jq systemctl netstat; do
     if ! command_exists "$cmd"; then
-        echo "Error: Required command '$cmd' not found. Please install it first."
-        exit 1
+        echo "Start install $cmd"
+        apt install -y $cmd
     fi
 done
 

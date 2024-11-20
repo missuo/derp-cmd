@@ -2,7 +2,6 @@
 
 [![License](https://img.shields.io/github/license/missuo/derp-cmd)](https://github.com/missuo/derp-cmd/blob/main/LICENSE)
 [![Release](https://img.shields.io/github/v/release/missuo/derp-cmd)](https://github.com/missuo/derp-cmd/releases)
-[![Go Report Card](https://goreportcard.com/badge/github.com/missuo/derp-cmd)](https://goreportcard.com/report/github.com/missuo/derp-cmd)
 
 Easy to deploy and manage your own DERP (Designated Encrypted Relay for Packets) server, which can be used with Tailscale/Headscale.
 

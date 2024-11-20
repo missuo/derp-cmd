@@ -1,4 +1,15 @@
 #!/bin/bash
+###
+ # @Author: Vincent Yang
+ # @Date: 2024-11-19 23:02:30
+ # @LastEditors: Vincent Yang
+ # @LastEditTime: 2024-11-19 23:04:03
+ # @FilePath: /derp-cmd/install.sh
+ # @Telegram: https://t.me/missuo
+ # @GitHub: https://github.com/missuo
+ # 
+ # Copyright © 2024 by Vincent, All Rights Reserved. 
+### 
 
 # Function to check if a command exists
 command_exists() {
@@ -13,28 +24,8 @@ check_port() {
     fi
 }
 
-# Function to validate hostname DNS resolution
-validate_hostname() {
-    local hostname="$1"
-    local server_ip=$(curl -s https://ipinfo.io/ip)
-    local dns_ip=$(dig +short "$hostname" | head -n1)
-
-    if [ -z "$dns_ip" ]; then
-        echo "Error: Could not resolve hostname $hostname"
-        return 1
-    fi
-
-    if [ "$server_ip" != "$dns_ip" ]; then
-        echo "Error: Hostname $hostname does not resolve to this server's IP ($server_ip)"
-        echo "Please ensure your DNS is properly configured before continuing."
-        return 1
-    fi
-
-    return 0
-}
-
 # Check required commands
-for cmd in curl jq systemctl netstat dig; do
+for cmd in curl jq systemctl netstat; do
     if ! command_exists "$cmd"; then
         echo "Error: Required command '$cmd' not found. Please install it first."
         exit 1
@@ -64,9 +55,6 @@ echo "Latest version: $LATEST_TAG"
 # Prompt for hostname
 while true; do
     read -p "Please enter your hostname (e.g., derp.example.com): " HOSTNAME
-    if validate_hostname "$HOSTNAME"; then
-        break
-    fi
 done
 
 # Download binary

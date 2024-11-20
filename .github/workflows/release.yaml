@@ -33,7 +33,7 @@ jobs:
           
           # Windows amd64
           GOOS=windows GOARCH=amd64 go install tailscale.com/cmd/derper@latest
-          cp ~/go/bin/derper.exe builds/derper-windows-amd64.exe
+          cp ~/go/bin/derper builds/derper-windows-amd64.exe
           
           # macOS amd64
           GOOS=darwin GOARCH=amd64 go install tailscale.com/cmd/derper@latest

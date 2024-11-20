@@ -18,28 +18,30 @@ jobs:
         with:
           go-version: '1.23.3'
 
-      - name: Install derper
-        run: go install tailscale.com/cmd/derper@latest
-
       - name: Create build directory
         run: mkdir -p builds
 
       - name: Cross compile for different platforms
         run: |
           # Linux amd64
-          GOOS=linux GOARCH=amd64 go build -o builds/derper-linux-amd64 tailscale.com/cmd/derper
+          GOOS=linux GOARCH=amd64 go install tailscale.com/cmd/derper@latest
+          cp ~/go/bin/derper builds/derper-linux-amd64
           
           # Linux arm64
-          GOOS=linux GOARCH=arm64 go build -o builds/derper-linux-arm64 tailscale.com/cmd/derper
+          GOOS=linux GOARCH=arm64 go install tailscale.com/cmd/derper@latest
+          cp ~/go/bin/derper builds/derper-linux-arm64
           
           # Windows amd64
-          GOOS=windows GOARCH=amd64 go build -o builds/derper-windows-amd64.exe tailscale.com/cmd/derper
+          GOOS=windows GOARCH=amd64 go install tailscale.com/cmd/derper@latest
+          cp ~/go/bin/derper.exe builds/derper-windows-amd64.exe
           
           # macOS amd64
-          GOOS=darwin GOARCH=amd64 go build -o builds/derper-darwin-amd64 tailscale.com/cmd/derper
+          GOOS=darwin GOARCH=amd64 go install tailscale.com/cmd/derper@latest
+          cp ~/go/bin/derper builds/derper-darwin-amd64
           
           # macOS arm64
-          GOOS=darwin GOARCH=arm64 go build -o builds/derper-darwin-arm64 tailscale.com/cmd/derper
+          GOOS=darwin GOARCH=arm64 go install tailscale.com/cmd/derper@latest
+          cp ~/go/bin/derper builds/derper-darwin-arm64
 
       - name: Create release
         id: create_release

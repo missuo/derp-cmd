@@ -3,7 +3,7 @@
  # @Author: Vincent Yang
  # @Date: 2024-11-19 23:02:30
  # @LastEditors: Vincent Yang
- # @LastEditTime: 2024-11-19 23:05:30
+ # @LastEditTime: 2024-11-19 23:13:36
  # @FilePath: /derp-cmd/install.sh
  # @Telegram: https://t.me/missuo
  # @GitHub: https://github.com/missuo
@@ -68,11 +68,14 @@ chmod +x /usr/local/bin/derper
 # Create systemd service file
 cat > /etc/systemd/system/derper.service << EOF
 [Unit]
-Description=Derper DERP Server
+Description=DERP Server
 After=network.target
 
 [Service]
-ExecStart=/usr/local/bin/derper -hostname $HOSTNAME
+Type=simple
+ExecStart=/usr/local/bin/derper --hostname=$HOSTNAME
+WorkingDirectory=/usr/local/bin
+User=root
 Restart=always
 RestartSec=10
 LimitNOFILE=infinity

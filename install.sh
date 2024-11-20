@@ -3,7 +3,7 @@
  # @Author: Vincent Yang
  # @Date: 2024-11-19 23:02:30
  # @LastEditors: Vincent Yang
- # @LastEditTime: 2024-11-19 23:16:46
+ # @LastEditTime: 2024-11-19 23:26:47
  # @FilePath: /derp-cmd/install.sh
  # @Telegram: https://t.me/missuo
  # @GitHub: https://github.com/missuo
@@ -24,56 +24,57 @@ check_port() {
     fi
 }
 
-# Check required commands
-for cmd in curl jq systemctl netstat; do
-    if ! command_exists "$cmd"; then
-        echo "Start install $cmd"
-        apt update -y && apt install -y $cmd
+# Function to check if running as root
+check_root() {
+    if [ "$EUID" -ne 0 ]; then
+        echo "Error: Please run as root"
+        exit 1
     fi
-done
+}
 
-# Check if running as root
-if [ "$EUID" -ne 0 ]; then
-    echo "Error: Please run as root"
-    exit 1
-fi
+# Function to install required packages
+install_dependencies() {
+    for cmd in curl jq systemctl netstat; do
+        if ! command_exists "$cmd"; then
+            echo "Start install $cmd"
+            apt update -y && apt install -y $cmd
+        fi
+    done
+}
 
-# Check port 443 availability
-check_port
+# Function to get latest release tag
+get_latest_tag() {
+    LATEST_TAG=$(curl -s "https://api.github.com/repos/missuo/derp-cmd/releases/latest" | jq -r .tag_name)
+    if [ -z "$LATEST_TAG" ]; then
+        echo "Error: Could not fetch latest release tag"
+        exit 1
+    fi
+    echo "$LATEST_TAG"
+}
 
-# Get latest release tag
-echo "Fetching latest release information..."
-LATEST_TAG=$(curl -s "https://api.github.com/repos/missuo/derp-cmd/releases/latest" | jq -r .tag_name)
+# Function to download and install binary
+install_binary() {
+    local tag="$1"
+    echo "Downloading derper binary..."
+    DOWNLOAD_URL="https://github.com/missuo/derp-cmd/releases/download/$tag/derper-linux-amd64"
+    if ! curl -L -o /usr/local/bin/derper "$DOWNLOAD_URL"; then
+        echo "Error: Failed to download derper binary"
+        exit 1
+    fi
+    chmod +x /usr/local/bin/derper
+}
 
-if [ -z "$LATEST_TAG" ]; then
-    echo "Error: Could not fetch latest release tag"
-    exit 1
-fi
-
-echo "Latest version: $LATEST_TAG"
-
-read -p "Please enter your hostname (e.g., derp.example.com): " HOSTNAME
-
-# Download binary
-echo "Downloading derper binary..."
-DOWNLOAD_URL="https://github.com/missuo/derp-cmd/releases/download/$LATEST_TAG/derper-linux-amd64"
-if ! curl -L -o /usr/local/bin/derper "$DOWNLOAD_URL"; then
-    echo "Error: Failed to download derper binary"
-    exit 1
-fi
-
-# Set permissions
-chmod +x /usr/local/bin/derper
-
-# Create systemd service file
-cat > /etc/systemd/system/derper.service << EOF
+# Function to create systemd service
+create_service() {
+    local hostname="$1"
+    cat > /etc/systemd/system/derper.service << EOF
 [Unit]
 Description=DERP Server
 After=network.target
 
 [Service]
 Type=simple
-ExecStart=/usr/local/bin/derper --hostname=$HOSTNAME
+ExecStart=/usr/local/bin/derper --hostname=$hostname
 WorkingDirectory=/usr/local/bin
 User=root
 Restart=always
@@ -84,11 +85,79 @@ LimitNOFILE=infinity
 WantedBy=multi-user.target
 EOF
 
-# Reload systemd and start service
-systemctl daemon-reload
-systemctl enable derper
-systemctl start derper
+    systemctl daemon-reload
+    systemctl enable derper
+    systemctl start derper
+}
 
-echo "Installation completed successfully!"
-echo "Derper service has been installed and started."
-echo "You can check the status with: systemctl status derper"
+# Function to install DERP server
+install() {
+    check_root
+    install_dependencies
+    check_port
+
+    LATEST_TAG=$(get_latest_tag)
+    echo "Latest version: $LATEST_TAG"
+
+    read -p "Please enter your hostname (e.g., derp.example.com): " HOSTNAME
+    
+    install_binary "$LATEST_TAG"
+    create_service "$HOSTNAME"
+
+    echo "Installation completed successfully!"
+    echo "Derper service has been installed and started."
+    echo "You can check the status with: systemctl status derper"
+}
+
+# Function to uninstall DERP server
+uninstall() {
+    check_root
+    
+    echo "Stopping and disabling DERP server..."
+    systemctl stop derper
+    systemctl disable derper
+
+    echo "Removing files..."
+    rm -f /usr/local/bin/derper
+    rm -f /etc/systemd/system/derper.service
+    
+    systemctl daemon-reload
+
+    echo "DERP server has been uninstalled successfully!"
+}
+
+# Function to upgrade DERP server
+upgrade() {
+    check_root
+    
+    LATEST_TAG=$(get_latest_tag)
+    echo "Latest version: $LATEST_TAG"
+    
+    echo "Stopping DERP server..."
+    systemctl stop derper
+    
+    install_binary "$LATEST_TAG"
+    
+    echo "Starting DERP server..."
+    systemctl start derper
+    
+    echo "Upgrade completed successfully!"
+    echo "You can check the status with: systemctl status derper"
+}
+
+# Main script
+case "${1}" in
+    install)
+        install
+        ;;
+    uninstall)
+        uninstall
+        ;;
+    upgrade)
+        upgrade
+        ;;
+    *)
+        echo "Usage: $0 {install|uninstall|upgrade}"
+        exit 1
+        ;;
+esac

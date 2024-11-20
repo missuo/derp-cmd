@@ -3,7 +3,7 @@
  # @Author: Vincent Yang
  # @Date: 2024-11-19 23:02:30
  # @LastEditors: Vincent Yang
- # @LastEditTime: 2024-11-19 23:04:03
+ # @LastEditTime: 2024-11-19 23:05:30
  # @FilePath: /derp-cmd/install.sh
  # @Telegram: https://t.me/missuo
  # @GitHub: https://github.com/missuo
@@ -52,10 +52,7 @@ fi
 
 echo "Latest version: $LATEST_TAG"
 
-# Prompt for hostname
-while true; do
-    read -p "Please enter your hostname (e.g., derp.example.com): " HOSTNAME
-done
+read -p "Please enter your hostname (e.g., derp.example.com): " HOSTNAME
 
 # Download binary
 echo "Downloading derper binary..."

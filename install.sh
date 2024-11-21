@@ -3,7 +3,7 @@
  # @Author: Vincent Yang
  # @Date: 2024-11-19 23:02:30
  # @LastEditors: Vincent Yang
- # @LastEditTime: 2024-11-19 23:26:47
+ # @LastEditTime: 2024-11-20 22:23:56
  # @FilePath: /derp-cmd/install.sh
  # @Telegram: https://t.me/missuo
  # @GitHub: https://github.com/missuo
@@ -16,12 +16,19 @@ command_exists() {
     command -v "$1" >/dev/null 2>&1
 }
 
-# Function to check if port 443 is available
+# Function to check if specified port is available
 check_port() {
-    if netstat -tuln | grep -q ":443 "; then
-        echo "Error: Port 443 is already in use. Please free up the port first."
+    local port="$1"
+    if netstat -tuln | grep -q ":$port "; then
+        echo "Error: Port $port is already in use. Please free up the port first."
         exit 1
     fi
+}
+
+# Function to extract port number from address string
+extract_port() {
+    local addr="$1"
+    echo "${addr#*:}"
 }
 
 # Function to check if running as root
@@ -67,6 +74,7 @@ install_binary() {
 # Function to create systemd service
 create_service() {
     local hostname="$1"
+    local address="$2"
     cat > /etc/systemd/system/derper.service << EOF
 [Unit]
 Description=DERP Server
@@ -74,7 +82,7 @@ After=network.target
 
 [Service]
 Type=simple
-ExecStart=/usr/local/bin/derper --hostname=$hostname
+ExecStart=/usr/local/bin/derper --hostname=$hostname -a=$address
 WorkingDirectory=/usr/local/bin
 User=root
 Restart=always
@@ -94,18 +102,25 @@ EOF
 install() {
     check_root
     install_dependencies
-    check_port
-
+    
     LATEST_TAG=$(get_latest_tag)
     echo "Latest version: $LATEST_TAG"
 
     read -p "Please enter your hostname (e.g., derp.example.com): " HOSTNAME
+    read -p "Please enter the port number (default: 443): " PORT
     
+    # Set default port if none provided
+    PORT=${PORT:-443}
+    ADDRESS=":$PORT"
+    
+    # Check if port is available
+    check_port "$PORT"
+
     install_binary "$LATEST_TAG"
-    create_service "$HOSTNAME"
+    create_service "$HOSTNAME" "$ADDRESS"
 
     echo "Installation completed successfully!"
-    echo "Derper service has been installed and started."
+    echo "Derper service has been installed and started on port $PORT."
     echo "You can check the status with: systemctl status derper"
 }
 
@@ -133,6 +148,9 @@ upgrade() {
     LATEST_TAG=$(get_latest_tag)
     echo "Latest version: $LATEST_TAG"
     
+    # Get current port from running service
+    CURRENT_ADDRESS=$(systemctl show -p ExecStart derper | grep -o -- '-a=:[0-9]*' | cut -d= -f2)
+    
     echo "Stopping DERP server..."
     systemctl stop derper
     
@@ -142,6 +160,7 @@ upgrade() {
     systemctl start derper
     
     echo "Upgrade completed successfully!"
+    echo "Server running on port $(extract_port "$CURRENT_ADDRESS")"
     echo "You can check the status with: systemctl status derper"
 }
 
